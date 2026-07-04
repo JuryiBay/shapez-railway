@@ -4,6 +4,3 @@ build
 res_built
 *.log
 tmp_standalone_files
-electron
-electron_gog
-electron_wegame
