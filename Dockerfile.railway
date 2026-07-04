@@ -1,0 +1,29 @@
+# syntax=docker/dockerfile:1
+# shapez.io: build the static web client (needs Node 16 + ffmpeg + JRE for the
+# gulp atlas/audio pipeline), then serve it statically with nginx on Railway's $PORT.
+FROM node:16-bullseye AS build
+
+WORKDIR /shapez.io
+ENV NODE_OPTIONS=--max-old-space-size=4096
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ffmpeg default-jre \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY . .
+
+RUN yarn install --frozen-lockfile || yarn install
+RUN cd gulp && (yarn install --frozen-lockfile || yarn install)
+
+# Full self-host web build (web-localhost variant: offline, no external analytics/domain)
+# -> outputs static files to /shapez.io/build
+RUN cd gulp && yarn gulp build.web-localhost
+
+# --- runtime: tiny static server ---
+FROM nginx:alpine AS runtime
+COPY --from=build /shapez.io/build /usr/share/nginx/html
+RUN rm -f /etc/nginx/conf.d/default.conf
+COPY deploy/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+EXPOSE 8080
+CMD ["/entrypoint.sh"]

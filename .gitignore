@@ -1,0 +1,5 @@
+node_modules/
+build/
+res_built/
+*.log
+tmp_standalone_files/
