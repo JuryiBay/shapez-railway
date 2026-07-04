@@ -10,7 +10,13 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
-    location ~* \.(png|jpg|jpeg|gif|webp|svg|mp3|ogg|wav|woff2?|json|atlas)$ {
+    # shapez cachebusting: assets are referenced as /v/<commitHash>/<file>.
+    # Strip the /v/<hash>/ prefix and serve the real file (matched first).
+    location ~ ^/v/[^/]+/(.*)\$ {
+        try_files /\$1 =404;
+    }
+
+    location ~* \.(png|jpg|jpeg|gif|webp|svg|mp3|ogg|wav|woff2?|json|atlas)\$ {
         expires 7d;
         add_header Cache-Control "public";
     }
